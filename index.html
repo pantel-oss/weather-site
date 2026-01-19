@@ -1,11 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="mk">
 <head>
   <meta charset="UTF-8">
-  <title>Weather site</title>
+  <title>Временска прогноза</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      /* ФОН: СИНО НЕБО СО ОБЛАЦИ */
+      background: 
+        url("https://images.unsplash.com/photo-1501630834273-4b5604d2ee31?auto=format&fit=crop&w=1600&q=80")
+        no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    .weather-box {
+      background: rgba(255, 255, 255, 0.88);
+      padding: 25px;
+      border-radius: 14px;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #4da3ff;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #2f8df5;
+    }
+
+    .result {
+      margin-top: 15px;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Привет!</h1>
-  <p>Сайт работает 🚀</p>
+
+<div class="weather-box">
+  <h2>☁️ Временска прогноза</h2>
+  <input id="city" placeholder="Внеси град">
+  <button onclick="getWeather()">Провери време</button>
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+async function getWeather() {
+  const city = document.getElementById('city').value;
+  const result = document.getElementById('result');
+
+  if (!city) {
+    result.textContent = 'Внеси име на град';
+    return;
+  }
+
+  result.textContent = 'Се вчитува...';
+
+  try {
+    // Геокодирање
+    const geoRes = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=mk`
+    );
+    const geoData = await geoRes.json();
+
+    if (!geoData.results) {
+      result.textContent = 'Градот не е пронајден 😕';
+      return;
+    }
+
+    const { latitude, longitude, name, country } = geoData.results[0];
+
+    // Време
+    const weatherRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m`
+    );
+    const weatherData = await weatherRes.json();
+
+    result.innerHTML = `
+      <b>${name}, ${country}</b><br>
+      🌡 Температура: <b>${weatherData.current.temperature_2m}°C</b><br>
+      💨 Ветер: <b>${weatherData.current.wind_speed_10m} m/s</b>
+    `;
+  } catch (e) {
+    result.textContent = 'Грешка при вчитување на податоци';
+  }
+}
+</script>
+
 </body>
 </html>
