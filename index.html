@@ -1,95 +1,102 @@
 <!DOCTYPE html>
 <html lang="mk">
 <head>
-  <meta charset="UTF-8">
-  <title>Временска прогноза</title>
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+<meta charset="UTF-8">
+<title>Временска прогноза</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    background: linear-gradient(to bottom, #87ceeb, #fcd299);
+    position: relative;
+    padding-top: 50px;
+  }
 
-      /* ФОН: СИНО НЕБО СО ОБЛАЦИ */
-      background: 
-        url("https://images.unsplash.com/photo-1501630834273-4b5604d2ee31?auto=format&fit=crop&w=1600&q=80")
-        no-repeat center center fixed;
-      background-size: cover;
-    }
+  /* Облака */
+  .clouds-front, .clouds-back {
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 200%;
+    height: 100%;
+    background-size: cover;
+    z-index: 0;
+  }
+  .clouds-front {
+    background: url('https://i.imgur.com/O5K95f7.png') repeat-x;
+    animation: moveFront 60s linear infinite;
+    opacity: 0.6;
+  }
+  .clouds-back {
+    background: url('https://i.imgur.com/6d2khXJ.png') repeat-x;
+    animation: moveBack 120s linear infinite;
+    opacity: 0.4;
+  }
 
-    .weather-box {
-      background: rgba(255, 255, 255, 0.88);
-      padding: 25px;
-      border-radius: 14px;
-      width: 320px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-    }
+  @keyframes moveFront { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  @keyframes moveBack { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
-    h2 {
-      margin-top: 0;
-    }
+  /* Контейнер погоды */
+  .weather-box {
+    position: relative;
+    z-index: 10;
+    background: rgba(255,255,255,0.9);
+    padding: 25px;
+    border-radius: 14px;
+    width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  }
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 12px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
+  h2 { margin-top: 0; }
+  input { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; }
+  button { width: 100%; padding: 10px; border: none; border-radius: 8px; background: #ff8c00; color: white; font-size: 16px; cursor: pointer; }
+  button:hover { background: #e67600; }
+  .result { margin-top: 15px; font-size: 16px; }
 
-    button {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #4da3ff;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #2f8df5;
-    }
-
-    .result {
-      margin-top: 15px;
-      font-size: 16px;
-    }
-  </style>
+  /* Таблица прогноза недели */
+  table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+  th, td { padding: 8px; text-align: center; border: 1px solid #ccc; }
+  th { background: #ffebcd; }
+</style>
 </head>
 <body>
+
+<div class="clouds-back"></div>
+<div class="clouds-front"></div>
 
 <div class="weather-box">
   <h2>☁️ Временска прогноза</h2>
   <input id="city" placeholder="Внеси град">
   <button onclick="getWeather()">Провери време</button>
   <div class="result" id="result"></div>
+  <div id="weekly" style="margin-top:15px;"></div>
 </div>
 
 <script>
 async function getWeather() {
-  const city = document.getElementById('city').value;
+  const city = document.getElementById('city').value.trim();
   const result = document.getElementById('result');
+  const weekly = document.getElementById('weekly');
 
   if (!city) {
     result.textContent = 'Внеси име на град';
+    weekly.innerHTML = '';
     return;
   }
 
   result.textContent = 'Се вчитува...';
+  weekly.innerHTML = '';
 
   try {
-    // Геокодирање
-    const geoRes = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=mk`
-    );
+    // Геокодирање града
+    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=mk`);
     const geoData = await geoRes.json();
-
     if (!geoData.results) {
       result.textContent = 'Градот не е пронајден 😕';
       return;
@@ -97,24 +104,59 @@ async function getWeather() {
 
     const { latitude, longitude, name, country } = geoData.results[0];
 
-    // Време
-    const weatherRes = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m`
-    );
+    // Получение текущей и недельной погоды
+    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto`);
     const weatherData = await weatherRes.json();
 
+    // Текущая погода
+    const current = weatherData.current_weather;
     result.innerHTML = `
       <b>${name}, ${country}</b><br>
-      🌡 Температура: <b>${weatherData.current.temperature_2m}°C</b><br>
-      💨 Ветер: <b>${weatherData.current.wind_speed_10m} m/s</b>
+      🌡 Температура: <b>${current.temperature}°C</b><br>
+      💨 Ветер: <b>${current.windspeed} m/s</b>
     `;
+
+    // Прогноз на неделю
+    const daily = weatherData.daily;
+    let table = `<table>
+      <tr><th>Ден</th><th>Мин °C</th><th>Макс °C</th><th>Услов</th></tr>`;
+    for (let i = 0; i < daily.time.length; i++) {
+      const date = new Date(daily.time[i]);
+      const day = date.toLocaleDateString('mk-MK', { weekday: 'short' });
+      const condition = weatherCodeToEmoji(daily.weathercode[i]);
+      table += `<tr>
+        <td>${day}</td>
+        <td>${daily.temperature_2m_min[i]}</td>
+        <td>${daily.temperature_2m_max[i]}</td>
+        <td>${condition}</td>
+      </tr>`;
+    }
+    table += `</table>`;
+    weekly.innerHTML = table;
+
   } catch (e) {
+    console.error(e);
     result.textContent = 'Грешка при вчитување на податоци';
+    weekly.innerHTML = '';
+  }
+}
+
+// Преобразование weathercode в emoji (простейшая версия)
+function weatherCodeToEmoji(code) {
+  switch(code) {
+    case 0: return '☀️'; // ясно
+    case 1: return '🌤'; // мало облачно
+    case 2: return '⛅'; // облачно с прояснениями
+    case 3: return '☁️'; // облачно
+    case 45: case 48: return '🌫'; // туман
+    case 51: case 53: case 55: return '🌦'; // дождь мелкий
+    case 61: case 63: case 65: return '🌧'; // дождь
+    case 71: case 73: case 75: return '❄️'; // снег
+    case 95: case 96: case 99: return '⛈'; // гроза
+    default: return '❔';
   }
 }
 </script>
 
 </body>
 </html>
-
-
