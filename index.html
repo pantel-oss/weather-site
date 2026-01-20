@@ -5,21 +5,49 @@
 <title>Временска прогноза</title>
 
 <style>
+/* ===== ОСНОВНОЙ ФОН (ФЛАГ МАКЕДОНИИ) ===== */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
   min-height: 100vh;
-  background: linear-gradient(120deg, #ffcc33, #ff6a00, #ffcc33);
-  background-size: 300% 300%;
-  animation: bgMove 10s ease infinite;
+  background: linear-gradient(
+    -45deg,
+    #c40000,
+    #ffcc33,
+    #c40000,
+    #ffcc33
+  );
+  background-size: 400% 400%;
+  animation: flagWave 12s ease-in-out infinite;
+  overflow-x: hidden;
 }
 
-@keyframes bgMove {
+@keyframes flagWave {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
+/* ===== СОЛНЦЕ ===== */
+.sun {
+  position: fixed;
+  top: -120px;
+  left: -120px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, #ffeb3b 40%, #fbc02d 70%);
+  border-radius: 50%;
+  opacity: 0.35;
+  animation: sunRotate 20s linear infinite;
+  z-index: 0;
+}
+
+@keyframes sunRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ===== ТЕЛЕФОН ===== */
 .phone {
   position: fixed;
   top: 15px;
@@ -27,8 +55,10 @@ body {
   font-weight: bold;
   color: white;
   font-size: 16px;
+  z-index: 2;
 }
 
+/* ===== ОСНОВНОЙ БЛОК ===== */
 .weather-box {
   margin: 90px auto 30px;
   background: rgba(255,255,255,0.95);
@@ -37,6 +67,8 @@ body {
   width: 420px;
   text-align: center;
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 1;
 }
 
 input {
@@ -53,14 +85,14 @@ button {
   padding: 12px;
   border: none;
   border-radius: 10px;
-  background: #ff6a00;
+  background: #c40000;
   color: white;
   font-size: 17px;
   cursor: pointer;
 }
 
 button:hover {
-  background: #e55d00;
+  background: #a80000;
 }
 
 .result {
@@ -68,6 +100,7 @@ button:hover {
   font-size: 18px;
 }
 
+/* ===== ТАБЛИЦА СЕЙЧАС ===== */
 .now-table {
   width: 100%;
   margin-top: 15px;
@@ -75,11 +108,13 @@ button:hover {
   font-size: 18px;
 }
 
-.now-table th, .now-table td {
+.now-table th,
+.now-table td {
   border: 1px solid #ccc;
   padding: 10px;
 }
 
+/* ===== ПРОГНОЗ НА НЕДЕЛЮ ===== */
 .weekly-wrapper {
   width: 100%;
   padding: 20px;
@@ -91,23 +126,28 @@ button:hover {
   font-size: 20px;
   background: rgba(255,255,255,0.95);
   box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+  position: relative;
+  z-index: 1;
 }
 
-.weekly th, .weekly td {
+.weekly th,
+.weekly td {
   border: 1px solid #bbb;
   padding: 14px;
   text-align: center;
 }
 
 .weekly th {
-  background: #ffe0a3;
+  background: #ffeb99;
 }
 </style>
 </head>
 
 <body>
 
-<div class="phone">📞 +389 29 79 22 71</div>
+<div class="sun"></div>
+
+<div class="phone">📞 +389 79 29 22 71</div>
 
 <div class="weather-box">
   <h2>☀️ Временска прогноза</h2>
@@ -208,3 +248,4 @@ function icon(code) {
 
 </body>
 </html>
+
